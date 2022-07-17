@@ -38,6 +38,11 @@
                         "type": "string"
                     },
                     "default": []
+                },
+                "modifyFileWarning.enableNvmrcCheck": {
+                    "title": "will notify you to update your .nvmrc when version in .nvmrc in not the same in you shell environment",
+                    "type": "boolean",
+                    "default": false
                 }
             }
         }

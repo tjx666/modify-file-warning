@@ -1,8 +1,9 @@
-import vscode, { ExtensionContext } from 'vscode';
+import vscode from 'vscode';
 
 type Configuration = {
     includedFileGlobs: string[];
     excludedFileGlobs: string[];
+    enableNvmrcCheck: boolean;
 };
 
 export const configuration: Configuration = {} as Configuration;
@@ -10,8 +11,7 @@ updateConfiguration();
 
 export function updateConfiguration() {
     const extensionConfig = vscode.workspace.getConfiguration('modifyFileWarning');
-    configuration.includedFileGlobs = (extensionConfig.get('includedFileGlobs') as string[]) ?? [];
-    configuration.excludedFileGlobs = (extensionConfig.get('excludedFileGlobs') as string[]) ?? [];
+    configuration.includedFileGlobs = extensionConfig.get('includedFileGlobs') ?? [];
+    configuration.excludedFileGlobs = extensionConfig.get('excludedFileGlobs') ?? [];
+    configuration.enableNvmrcCheck = extensionConfig.get('enableNvmrcCheck') ?? false;
 }
-
-
