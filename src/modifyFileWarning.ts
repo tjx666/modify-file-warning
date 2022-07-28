@@ -114,7 +114,7 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
         const { shouldWarn, violatedGlob } = validateFile(document.uri.fsPath);
         if (shouldWarn) {
             warnedFiles.add(document);
-            const revertFileItem = { title: 'Revert File' };
+            const revertFileItem = { title: 'Revert' };
             const selectedItem = await vscode.window.showWarningMessage(
                 'Modify File Warning',
                 {

@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.0.3] - 2022-07-17
+
+### Added
+
+- warning user when shouldn't create file
+- warning user when shouldn't delete file
+- add `Revert` action to warning modal
+- add `Update` action to nvmrc check message
+
 ## [0.0.2] - 2022-07-17
 
 ### Added
