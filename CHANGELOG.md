@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.1.0] - 2022-11-11
+
+### Changed
+
+- use esbuild bundle extension
+
 ## [0.0.3] - 2022-07-17
 
 ### Added
