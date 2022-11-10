@@ -3,7 +3,15 @@ import vscode from 'vscode';
 
 import { configuration } from './configuration';
 
+const warnedFiles = new Set();
+
 function validateFile(fsPath: string) {
+    if (warnedFiles.size > 50) {
+        vscode.window.showErrorMessage(`warned files is too many, count: ${warnedFiles.size}`);
+    }
+
+    const start = Date.now();
+
     let violatedGlob: string | undefined;
     const isIncluded = configuration.includedFileGlobs.some((glob) => {
         if (minimatch(fsPath, glob)) {
@@ -15,14 +23,29 @@ function validateFile(fsPath: string) {
     });
     const isExcluded = configuration.excludedFileGlobs.some((glob) => minimatch(fsPath, glob));
     const shouldWarn = isIncluded && !isExcluded;
+
+    const cost = Date.now() - start;
+    if (cost > configuration.validateCostThreshold) {
+        vscode.window.showWarningMessage(
+            `File Warning check file "${fsPath}" costs: ${cost}ms, you may set bad glob patterns`,
+        );
+    }
+
     return {
         shouldWarn,
         violatedGlob,
     };
 }
 
+function revert() {
+    return vscode.commands.executeCommand('workbench.action.files.revert');
+}
+
+function undo() {
+    return vscode.commands.executeCommand('undo');
+}
+
 export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscriptions']) {
-    const warnedFiles = new Set();
     let checkCreate = true;
     let checkDelete = true;
 
@@ -99,7 +122,7 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
         );
         if (selectedItem === restoreItem) {
             checkCreate = false;
-            await vscode.commands.executeCommand('undo');
+            await undo();
             setTimeout(() => {
                 checkCreate = true;
             }, 100);
@@ -112,6 +135,7 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
         }
 
         const { shouldWarn, violatedGlob } = validateFile(document.uri.fsPath);
+
         if (shouldWarn) {
             warnedFiles.add(document);
             const revertFileItem = { title: 'Revert' };
@@ -124,7 +148,7 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
                 revertFileItem,
             );
             if (selectedItem === revertFileItem) {
-                await vscode.commands.executeCommand('workbench.action.files.revert');
+                await revert();
                 if (vscode.workspace.getConfiguration().get('files.autoSave') !== 'afterDelay') {
                     warnedFiles.delete(document);
                 }
