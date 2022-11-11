@@ -6,7 +6,7 @@ Useful when modify file under node_modules accidentally.
 
 ## Settings
 
-```json
+```jsonc
 {
   // will give a warning is file match the includedFileGlobs
   "modifyFileWarning.includedFileGlobs": ["**/node_modules/**/*"],
