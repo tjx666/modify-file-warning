@@ -1,5 +1,7 @@
 # modify-file-warning README
 
+![test](https://github.com/tjx666/modify-file-warning/actions/workflows/test.yml/badge.svg)
+
 Useful when modify file under node_modules accidentally.
 
 ## Settings
