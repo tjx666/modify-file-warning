@@ -3,7 +3,7 @@
     "displayName": "Modify File Warning",
     "description": "Useful when modify file under node_modules accidentally",
     "publisher": "YuTengjing",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "icon": "images/logo.png",
     "engines": {
         "vscode": "^1.73.0"
@@ -73,6 +73,7 @@
         "eslint": "^8.27.0",
         "eslint-config-prettier": "^8.5.0",
         "prettier": "^2.7.1",
+        "rimraf": "^3.0.2",
         "typescript": "^4.8.4"
     },
     "dependencies": {
