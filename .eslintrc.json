@@ -6,6 +6,8 @@
         "sourceType": "module"
     },
     "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "prettier"],
-    "rules": {},
+    "rules": {
+        "@typescript-eslint/no-non-null-assertion": "OFF"
+    },
     "ignorePatterns": ["out", "**/*.d.ts"]
 }
