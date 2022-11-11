@@ -50,7 +50,7 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
     let checkDelete = true;
 
     vscode.workspace.onDidCreateFiles(async ({ files }) => {
-        if (!checkCreate) {
+        if (!checkCreate || files.length === 0) {
             return;
         }
 
@@ -100,7 +100,7 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
     }, subscriptions);
 
     vscode.workspace.onDidDeleteFiles(async ({ files }) => {
-        if (!checkDelete) {
+        if (!checkDelete || files.length === 0) {
             return;
         }
 
@@ -129,8 +129,12 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
         }
     }, subscriptions);
 
-    vscode.workspace.onDidChangeTextDocument(async ({ document }) => {
-        if (warnedFiles.has(document) || document.uri.scheme !== 'file') {
+    vscode.workspace.onDidChangeTextDocument(async ({ document, contentChanges }) => {
+        if (
+            warnedFiles.has(document) ||
+            contentChanges.length === 0 ||
+            document.uri.scheme !== 'file'
+        ) {
             return;
         }
 
