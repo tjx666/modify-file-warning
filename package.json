@@ -3,7 +3,7 @@
     "displayName": "Modify File Warning",
     "description": "Useful when modify file under node_modules accidentally",
     "publisher": "YuTengjing",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "icon": "images/logo.png",
     "engines": {
         "vscode": "^1.76.0"
