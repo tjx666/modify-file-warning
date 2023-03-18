@@ -7,9 +7,13 @@ import { modifyFileWarning } from './modifyFileWarning';
 export async function activate(context: vscode.ExtensionContext) {
     const { subscriptions } = context;
 
-    vscode.workspace.onDidChangeConfiguration(() => {
-        updateConfiguration();
-    }, subscriptions);
+    vscode.workspace.onDidChangeConfiguration(
+        () => {
+            updateConfiguration();
+        },
+        null,
+        subscriptions,
+    );
 
     modifyFileWarning(subscriptions);
 

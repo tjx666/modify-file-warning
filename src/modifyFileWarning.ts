@@ -49,118 +49,136 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
     let checkCreate = true;
     let checkDelete = true;
 
-    vscode.workspace.onDidCreateFiles(async ({ files }) => {
-        if (!checkCreate || files.length === 0) {
-            return;
-        }
-
-        async function checkFile(file: vscode.Uri) {
-            if (file.scheme !== 'file') {
+    vscode.workspace.onDidCreateFiles(
+        async ({ files }) => {
+            if (!checkCreate || files.length === 0) {
                 return;
             }
 
-            const { shouldWarn, violatedGlob } = validateFile(file.fsPath);
-            if (!shouldWarn) {
-                return;
-            }
+            async function checkFile(file: vscode.Uri) {
+                if (file.scheme !== 'file') {
+                    return;
+                }
 
-            let editor = vscode.window.visibleTextEditors.find(
-                (editor) => editor.document.uri.fsPath === file.fsPath,
-            );
-            if (!editor) {
-                const document = await vscode.workspace.openTextDocument(file);
-                editor = await vscode.window.showTextDocument(document);
-            } else {
-                vscode.window.showTextDocument(editor.document);
-            }
+                const { shouldWarn, violatedGlob } = validateFile(file.fsPath);
+                if (!shouldWarn) {
+                    return;
+                }
 
-            warnedFiles.add(editor.document);
-            const deleteFileItem = { title: 'Delete' };
-            const selectedItem = await vscode.window.showWarningMessage(
-                'Modify File Warning',
-                {
-                    modal: true,
-                    detail: `You shouldn't create this file because it violates the glob: "${violatedGlob}"`,
-                },
-                deleteFileItem,
-            );
-            if (selectedItem === deleteFileItem) {
-                checkDelete = false;
-                const edit = new vscode.WorkspaceEdit();
-                edit.deleteFile(file, { recursive: true, ignoreIfNotExists: true });
-                await vscode.workspace.applyEdit(edit);
-                warnedFiles.delete(editor.document);
-                checkDelete = true;
-            }
-        }
+                let editor = vscode.window.visibleTextEditors.find(
+                    (editor) => editor.document.uri.fsPath === file.fsPath,
+                );
+                if (!editor) {
+                    const document = await vscode.workspace.openTextDocument(file);
+                    editor = await vscode.window.showTextDocument(document);
+                } else {
+                    vscode.window.showTextDocument(editor.document);
+                }
 
-        for (const file of files) {
-            await checkFile(file);
-        }
-    }, subscriptions);
-
-    vscode.workspace.onDidDeleteFiles(async ({ files }) => {
-        if (!checkDelete || files.length === 0) {
-            return;
-        }
-
-        const invalidFiles = files
-            .filter((file) => file.scheme === 'file' && validateFile(file.fsPath).shouldWarn)
-            .map((uri) => uri.fsPath);
-        if (invalidFiles.length === 0) {
-            return;
-        }
-
-        const restoreItem = { title: 'Restore' };
-        const selectedItem = await vscode.window.showWarningMessage(
-            'Modify File Warning',
-            {
-                modal: true,
-                detail: 'files:\n' + invalidFiles.join('\n') + ` shouldn't be delete`,
-            },
-            restoreItem,
-        );
-        if (selectedItem === restoreItem) {
-            checkCreate = false;
-            await undo();
-            setTimeout(() => {
-                checkCreate = true;
-            }, 100);
-        }
-    }, subscriptions);
-
-    vscode.workspace.onDidChangeTextDocument(async ({ document, contentChanges }) => {
-        if (
-            warnedFiles.has(document) ||
-            contentChanges.length === 0 ||
-            document.uri.scheme !== 'file'
-        ) {
-            return;
-        }
-
-        const { shouldWarn, violatedGlob } = validateFile(document.uri.fsPath);
-
-        if (shouldWarn) {
-            warnedFiles.add(document);
-            const revertFileItem = { title: 'Revert' };
-            const selectedItem = await vscode.window.showWarningMessage(
-                'Modify File Warning',
-                {
-                    modal: true,
-                    detail: `This file shouldn't be modified because it violates the glob: "${violatedGlob}"`,
-                },
-                revertFileItem,
-            );
-            if (selectedItem === revertFileItem) {
-                await revert();
-                if (vscode.workspace.getConfiguration().get('files.autoSave') !== 'afterDelay') {
-                    warnedFiles.delete(document);
+                warnedFiles.add(editor.document);
+                const deleteFileItem = { title: 'Delete' };
+                const selectedItem = await vscode.window.showWarningMessage(
+                    'Modify File Warning',
+                    {
+                        modal: true,
+                        detail: `You shouldn't create this file because it violates the glob: "${violatedGlob}"`,
+                    },
+                    deleteFileItem,
+                );
+                if (selectedItem === deleteFileItem) {
+                    checkDelete = false;
+                    const edit = new vscode.WorkspaceEdit();
+                    edit.deleteFile(file, { recursive: true, ignoreIfNotExists: true });
+                    await vscode.workspace.applyEdit(edit);
+                    warnedFiles.delete(editor.document);
+                    checkDelete = true;
                 }
             }
-        }
-    }, subscriptions);
 
-    vscode.workspace.onDidCloseTextDocument((document) => {
-        warnedFiles.delete(document);
-    }, subscriptions);
+            for (const file of files) {
+                await checkFile(file);
+            }
+        },
+        null,
+        subscriptions,
+    );
+
+    vscode.workspace.onDidDeleteFiles(
+        async ({ files }) => {
+            if (!checkDelete || files.length === 0) {
+                return;
+            }
+
+            const invalidFiles = files
+                .filter((file) => file.scheme === 'file' && validateFile(file.fsPath).shouldWarn)
+                .map((uri) => uri.fsPath);
+            if (invalidFiles.length === 0) {
+                return;
+            }
+
+            const restoreItem = { title: 'Restore' };
+            const selectedItem = await vscode.window.showWarningMessage(
+                'Modify File Warning',
+                {
+                    modal: true,
+                    detail: 'files:\n' + invalidFiles.join('\n') + ` shouldn't be delete`,
+                },
+                restoreItem,
+            );
+            if (selectedItem === restoreItem) {
+                checkCreate = false;
+                await undo();
+                setTimeout(() => {
+                    checkCreate = true;
+                }, 100);
+            }
+        },
+        null,
+        subscriptions,
+    );
+
+    vscode.workspace.onDidChangeTextDocument(
+        async ({ document, contentChanges }) => {
+            if (
+                warnedFiles.has(document) ||
+                contentChanges.length === 0 ||
+                document.uri.scheme !== 'file'
+            ) {
+                return;
+            }
+
+            const { shouldWarn, violatedGlob } = validateFile(document.uri.fsPath);
+
+            if (shouldWarn) {
+                warnedFiles.add(document);
+                const revertFileItem = { title: 'Revert' };
+                const selectedItem = await vscode.window.showWarningMessage(
+                    'Modify File Warning',
+                    {
+                        modal: true,
+                        detail: `This file shouldn't be modified because it violates the glob: "${violatedGlob}"`,
+                    },
+                    revertFileItem,
+                );
+                if (selectedItem === revertFileItem) {
+                    await revert();
+                    if (
+                        vscode.workspace.getConfiguration().get('files.autoSave') !== 'afterDelay'
+                    ) {
+                        warnedFiles.delete(document);
+                    }
+                }
+            }
+        },
+        null,
+        subscriptions,
+    );
+
+    vscode.workspace.onDidCloseTextDocument(
+        (document) => {
+            warnedFiles.delete(document);
+        },
+        null,
+        subscriptions,
+    );
 }
