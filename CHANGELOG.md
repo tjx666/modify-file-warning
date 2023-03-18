@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.1.2] - 2023-03-19
+
+### Changed
+
+- just upgrade deps and some code refactor
+
 ## [0.1.1] - 2022-11-12
 
 ### Changed
