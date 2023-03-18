@@ -6,7 +6,7 @@
     "version": "0.1.1",
     "icon": "images/logo.png",
     "engines": {
-        "vscode": "^1.73.0"
+        "vscode": "^1.76.0"
     },
     "categories": [
         "Other"
@@ -19,6 +19,42 @@
         "onStartupFinished"
     ],
     "main": "./out/extension.js",
+    "eslintConfig": {
+        "extends": "@yutengjing/eslint-config-typescript"
+    },
+    "prettier": "@yutengjing/prettier-config",
+    "scripts": {
+        "vscode:prepublish": "pnpm esbuild:base --minify",
+        "preinstall": "npx only-allow pnpm",
+        "clear": "rimraf ./out",
+        "esbuild:base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+        "esbuild:watch": "pnpm esbuild:base --sourcemap --watch",
+        "compile:test": "pnpm clear && tsc -p ./test/tsconfig.json",
+        "lint": "eslint src --ext ts",
+        "test": "pnpm compile:test && node ./out/test/runTests.js",
+        "package": "vsce package --no-dependencies",
+        "release": "bumpp -c \"release: v%s\" package.json",
+        "publish:vs-marketplace": "vsce publish --no-dependencies",
+        "publish:open-vsx": "ovsx publish --no-dependencies"
+    },
+    "dependencies": {
+        "minimatch": "7.4.2"
+    },
+    "devDependencies": {
+        "@types/minimatch": "5.1.2",
+        "@types/node": "18.15.3",
+        "@types/vscode": "^1.76.0",
+        "@vscode/vsce": "^2.18.0",
+        "@yutengjing/eslint-config-typescript": "^0.2.6",
+        "@yutengjing/prettier-config": "^0.0.1",
+        "bumpp": "^9.0.0",
+        "esbuild": "^0.17.12",
+        "eslint": "^8.36.0",
+        "ovsx": "^0.8.0",
+        "prettier": "^2.8.4",
+        "rimraf": "^4.4.0",
+        "typescript": "^5.0.2"
+    },
     "contributes": {
         "configuration": {
             "title": "Modify File Warning",
@@ -51,32 +87,5 @@
                 }
             }
         }
-    },
-    "scripts": {
-        "vscode:prepublish": "pnpm esbuild:base --minify",
-        "clear": "rimraf ./out",
-        "esbuild:base": "pnpm clear && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
-        "esbuild:watch": "pnpm esbuild:base --sourcemap --watch",
-        "lint": "eslint src --ext ts",
-        "test": "pnpm lint && pnpm vscode:prepublish",
-        "package": "vsce package --no-dependencies",
-        "publish": "vsce publish --no-dependencies"
-    },
-    "devDependencies": {
-        "@types/glob": "^8.0.0",
-        "@types/minimatch": "5.1.2",
-        "@types/node": "16.11.46",
-        "@types/vscode": "^1.73.0",
-        "@typescript-eslint/eslint-plugin": "^5.42.1",
-        "@typescript-eslint/parser": "^5.42.1",
-        "esbuild": "^0.15.12",
-        "eslint": "^8.27.0",
-        "eslint-config-prettier": "^8.5.0",
-        "prettier": "^2.7.1",
-        "rimraf": "^3.0.2",
-        "typescript": "^4.8.4"
-    },
-    "dependencies": {
-        "minimatch": "5.1.0"
     }
 }
