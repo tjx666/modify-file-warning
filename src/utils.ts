@@ -1,6 +1,6 @@
-import { exec } from 'child_process';
-import fs from 'fs/promises';
-import { constants as FS_CONSTANTS } from 'fs';
+import { exec } from 'node:child_process';
+import { constants as FS_CONSTANTS } from 'node:fs';
+import fs from 'node:fs/promises';
 
 export function pathExists(path: string) {
     return fs

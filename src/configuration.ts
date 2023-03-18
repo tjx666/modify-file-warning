@@ -1,11 +1,11 @@
 import vscode from 'vscode';
 
-type Configuration = {
+interface Configuration {
     includedFileGlobs: string[];
     excludedFileGlobs: string[];
     enableNvmrcCheck: boolean;
     validateCostThreshold: number;
-};
+}
 
 export const configuration: Configuration = {} as Configuration;
 updateConfiguration();

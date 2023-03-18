@@ -121,7 +121,7 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
                 'Modify File Warning',
                 {
                     modal: true,
-                    detail: 'files:\n' + invalidFiles.join('\n') + ` shouldn't be delete`,
+                    detail: `files:\n${invalidFiles.join('\n')} shouldn't be delete`,
                 },
                 restoreItem,
             );

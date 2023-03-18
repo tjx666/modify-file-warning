@@ -1,5 +1,6 @@
-import fs from 'fs/promises';
-import { resolve } from 'path';
+import fs from 'node:fs/promises';
+import { resolve } from 'node:path';
+
 import vscode from 'vscode';
 
 import { getNodeVersion, pathExists } from './utils';
@@ -12,7 +13,7 @@ export async function checkNvmrc() {
         const nvmConfigPath = resolve(workspaceFolderPath, '.nvmrc');
         const existsNvmConfig = await pathExists(nvmConfigPath);
         if (existsNvmConfig) {
-            const nvmConfig = await fs.readFile(nvmConfigPath, { encoding: 'utf-8' });
+            const nvmConfig = await fs.readFile(nvmConfigPath, { encoding: 'utf8' });
             const nodeVersionInConfig = nvmConfig.trim();
             const nodeVersion = await getNodeVersion(workspaceFolderPath);
             if (nodeVersionInConfig !== nodeVersion) {
@@ -25,7 +26,7 @@ export async function checkNvmrc() {
                     await fs.writeFile(
                         nvmConfigPath,
                         nvmConfig.replace(nodeVersionInConfig, nodeVersion),
-                        { encoding: 'utf-8' },
+                        { encoding: 'utf8' },
                     );
                 }
             }
