@@ -1,11 +1,5 @@
 # Change Log
 
-## [1.0.1] - 2023-04-27
-
-### Change
-
-- just update README
-
 ## [1.0.0] - 2023-04-27
 
 ### Breaking Change
