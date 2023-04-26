@@ -1,13 +1,16 @@
-import minimatch from 'minimatch';
-import vscode from 'vscode';
+import { setTimeout } from 'node:timers/promises';
+
+import { minimatch } from 'minimatch';
+import vscode, { Uri } from 'vscode';
 
 import { configuration } from './configuration';
 
-const warnedFiles = new Set();
+const warnedFiles = new Set<string>();
 
 function validateFile(fsPath: string) {
     if (warnedFiles.size > 50) {
         vscode.window.showErrorMessage(`warned files is too many, count: ${warnedFiles.size}`);
+        console.error(`warned files:\n${[...warnedFiles].join('\n')}`);
     }
 
     const start = Date.now();
@@ -37,15 +40,15 @@ function validateFile(fsPath: string) {
     };
 }
 
-function revert() {
+async function revert() {
     return vscode.commands.executeCommand('workbench.action.files.revert');
 }
 
-function undo() {
+async function undo() {
     return vscode.commands.executeCommand('undo');
 }
 
-export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscriptions']) {
+export function modifyFileWarning({ subscriptions }: vscode.ExtensionContext) {
     let checkCreate = true;
     let checkDelete = true;
 
@@ -55,9 +58,10 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
                 return;
             }
 
-            async function checkFile(file: vscode.Uri) {
+            const filesChooseToDelete: string[] = [];
+            for (const file of files) {
                 if (file.scheme !== 'file') {
-                    return;
+                    continue;
                 }
 
                 const { shouldWarn, violatedGlob } = validateFile(file.fsPath);
@@ -65,17 +69,8 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
                     return;
                 }
 
-                let editor = vscode.window.visibleTextEditors.find(
-                    (editor) => editor.document.uri.fsPath === file.fsPath,
-                );
-                if (!editor) {
-                    const document = await vscode.workspace.openTextDocument(file);
-                    editor = await vscode.window.showTextDocument(document);
-                } else {
-                    vscode.window.showTextDocument(editor.document);
-                }
-
-                warnedFiles.add(editor.document);
+                await vscode.commands.executeCommand('vscode.open', file);
+                warnedFiles.add(file.fsPath);
                 const deleteFileItem = { title: 'Delete' };
                 const selectedItem = await vscode.window.showWarningMessage(
                     'Modify File Warning',
@@ -86,17 +81,18 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
                     deleteFileItem,
                 );
                 if (selectedItem === deleteFileItem) {
-                    checkDelete = false;
-                    const edit = new vscode.WorkspaceEdit();
-                    edit.deleteFile(file, { recursive: true, ignoreIfNotExists: true });
-                    await vscode.workspace.applyEdit(edit);
-                    warnedFiles.delete(editor.document);
-                    checkDelete = true;
+                    filesChooseToDelete.push(file.fsPath);
                 }
             }
-
-            for (const file of files) {
-                await checkFile(file);
+            if (filesChooseToDelete.length > 0) {
+                checkDelete = false;
+                const edit = new vscode.WorkspaceEdit();
+                for (const file of filesChooseToDelete) {
+                    edit.deleteFile(Uri.file(file), { recursive: true, ignoreIfNotExists: true });
+                    warnedFiles.delete(file);
+                }
+                await vscode.workspace.applyEdit(edit);
+                checkDelete = true;
             }
         },
         null,
@@ -121,16 +117,15 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
                 'Modify File Warning',
                 {
                     modal: true,
-                    detail: `files:\n${invalidFiles.join('\n')} shouldn't be delete`,
+                    detail: `These files shouldn't be deleted:\n${invalidFiles.join('\n')}`,
                 },
                 restoreItem,
             );
             if (selectedItem === restoreItem) {
                 checkCreate = false;
                 await undo();
-                setTimeout(() => {
-                    checkCreate = true;
-                }, 100);
+                await setTimeout(100);
+                checkCreate = true;
             }
         },
         null,
@@ -140,9 +135,9 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
     vscode.workspace.onDidChangeTextDocument(
         async ({ document, contentChanges }) => {
             if (
-                warnedFiles.has(document) ||
-                contentChanges.length === 0 ||
-                document.uri.scheme !== 'file'
+                document.uri.scheme !== 'file' ||
+                warnedFiles.has(document.uri.fsPath) ||
+                contentChanges.length === 0
             ) {
                 return;
             }
@@ -150,7 +145,7 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
             const { shouldWarn, violatedGlob } = validateFile(document.uri.fsPath);
 
             if (shouldWarn) {
-                warnedFiles.add(document);
+                warnedFiles.add(document.uri.fsPath);
                 const revertFileItem = { title: 'Revert' };
                 const selectedItem = await vscode.window.showWarningMessage(
                     'Modify File Warning',
@@ -161,11 +156,16 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
                     revertFileItem,
                 );
                 if (selectedItem === revertFileItem) {
-                    await revert();
+                    if (document.isDirty) {
+                        await revert();
+                    } else {
+                        await undo();
+                    }
+
                     if (
                         vscode.workspace.getConfiguration().get('files.autoSave') !== 'afterDelay'
                     ) {
-                        warnedFiles.delete(document);
+                        warnedFiles.delete(document.uri.fsPath);
                     }
                 }
             }
@@ -176,7 +176,7 @@ export function modifyFileWarning(subscriptions: vscode.ExtensionContext['subscr
 
     vscode.workspace.onDidCloseTextDocument(
         (document) => {
-            warnedFiles.delete(document);
+            warnedFiles.delete(document.uri.fsPath);
         },
         null,
         subscriptions,

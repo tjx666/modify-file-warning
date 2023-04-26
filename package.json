@@ -64,7 +64,9 @@
                     "items": {
                         "type": "string"
                     },
-                    "default": []
+                    "default": [
+                        "**/node_modules/**"
+                    ]
                 },
                 "modifyFileWarning.excludedFileGlobs": {
                     "title": "exclude files defined in modifyFileWarning.includedFileGlobs",
@@ -78,11 +80,6 @@
                     "title": "will notify warning when validate a file cost longer then this threshold, unit is ms",
                     "type": "number",
                     "default": 100
-                },
-                "modifyFileWarning.enableNvmrcCheck": {
-                    "title": "will notify you to update your .nvmrc when version in .nvmrc in not the same in you shell environment",
-                    "type": "boolean",
-                    "default": false
                 }
             }
         }
