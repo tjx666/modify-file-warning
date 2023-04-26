@@ -1,5 +1,20 @@
 # Change Log
 
+## [1.0.1] - 2023-04-27
+
+### Change
+
+- just update README
+
+## [1.0.0] - 2023-04-27
+
+### Breaking Change
+
+- remove nvmrc check feature
+- the default warning files pattern changed to be `["**/node_modules/**"]`
+
+### Changed
+
 ## [0.1.2] - 2023-03-19
 
 ### Changed
